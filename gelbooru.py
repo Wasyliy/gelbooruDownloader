@@ -1,3 +1,5 @@
+# К всем частям кода есть примечания, можете брать и редактировать под свои нужды
+# There are notes to all parts of the code, you can take and edit to suit your needs
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 import requests
@@ -18,21 +20,25 @@ class GelbooruDownloader:
         self.root.geometry("900x700")
         
         # API настройки
+        # API settings
         self.api_key = ""
         self.user_id = ""
         
         # Пути и настройки
+        # Paths and Settings
         self.download_path = ""
         self.tags_history_file = "gelbooru_tags_history.json"
         self.downloaded_hashes_file = "gelbooru_downloaded_hashes.json"
         self.downloaded_ids_file = "gelbooru_downloaded_ids.json"
         
         # Загружаем историю
+        # history download
         self.tags_history = self.load_tags_history()
         self.downloaded_hashes = self.load_downloaded_hashes()
         self.downloaded_ids = self.load_downloaded_ids()
         
         # Переменные для управления
+        # Variables to control
         self.is_downloading = False
         self.stop_download = False
         
@@ -40,15 +46,18 @@ class GelbooruDownloader:
     
     def setup_ui(self):
         # Главный фрейм
+        # main frame
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill="both", expand=True)
         
         # Заголовок
+        # Title
         title_label = ttk.Label(main_frame, text="Gelbooru Downloader", 
                                font=("Arial", 16, "bold"))
         title_label.pack(pady=(0, 10))
         
         # Фрейм API настроек
+        # Frame api settings
         api_frame = ttk.LabelFrame(main_frame, text="API Настройки Gelbooru", padding="10")
         api_frame.pack(fill="x", pady=(0, 10))
         
@@ -63,20 +72,24 @@ class GelbooruDownloader:
         self.user_id_entry.grid(row=1, column=1, padx=5, pady=2, sticky="w")
         
         # Пример формата
+        # Example of the format
         example_label = ttk.Label(api_frame, text="Формат: &api_key=XXX&user_id=XXX", 
                                  font=("Arial", 8), foreground="gray")
         example_label.grid(row=1, column=2, sticky="w", padx=5)
         
         # Фрейм тегов
+        # tags frame
         tags_frame = ttk.LabelFrame(main_frame, text="Теги для поиска", padding="10")
         tags_frame.pack(fill="x", pady=(0, 10))
         
         # Поле ввода тегов
+        # Tag entry field
         ttk.Label(tags_frame, text="Теги (через пробел, + для И, | для ИЛИ):").pack(anchor="w")
         self.tags_entry = ttk.Entry(tags_frame, width=80)
         self.tags_entry.pack(fill="x", pady=5)
         
         # Примеры тегов
+        # Tag Examples
         examples_frame = ttk.Frame(tags_frame)
         examples_frame.pack(fill="x", pady=5)
         ttk.Label(examples_frame, text="Примеры:").pack(side="left")
@@ -86,12 +99,14 @@ class GelbooruDownloader:
                       command=lambda t=tag: self.insert_tag(t)).pack(side="left", padx=2)
         
         # История тегов
+        # tags history
         ttk.Label(tags_frame, text="История тегов:").pack(anchor="w", pady=(10, 0))
         self.tags_history_listbox = tk.Listbox(tags_frame, height=4)
         self.tags_history_listbox.pack(fill="x", pady=5)
         self.tags_history_listbox.bind("<<ListboxSelect>>", self.on_tags_history_select)
         
         # Кнопки для истории тегов
+        # button for tags history
         history_buttons_frame = ttk.Frame(tags_frame)
         history_buttons_frame.pack(fill="x")
         ttk.Button(history_buttons_frame, text="Добавить в историю", 
@@ -100,10 +115,12 @@ class GelbooruDownloader:
                   command=self.remove_from_tags_history).pack(side="left")
         
         # Фрейм настроек загрузки
+        # frame setting downloads
         settings_frame = ttk.LabelFrame(main_frame, text="Настройки загрузки", padding="10")
         settings_frame.pack(fill="x", pady=(0, 10))
         
         # Количество постов
+        # Number of posts
         ttk.Label(settings_frame, text="Количество постов:").grid(row=0, column=0, sticky="w", pady=2)
         self.limit_var = tk.StringVar(value="100")
         self.limit_spinbox = ttk.Spinbox(settings_frame, from_=1, to=1000, 
@@ -111,6 +128,7 @@ class GelbooruDownloader:
         self.limit_spinbox.grid(row=0, column=1, sticky="w", padx=5, pady=2)
         
         # Папка для сохранения
+        # folder for download
         ttk.Label(settings_frame, text="Папка для сохранения:").grid(row=1, column=0, sticky="w", pady=2)
         self.download_path_var = tk.StringVar()
         ttk.Entry(settings_frame, textvariable=self.download_path_var, width=50).grid(
@@ -119,6 +137,7 @@ class GelbooruDownloader:
                   command=self.select_download_folder).grid(row=1, column=2, padx=5, pady=2)
         
         # Дополнительные опции
+        # additional settings
         ttk.Label(settings_frame, text="Рейтинг:").grid(row=2, column=0, sticky="w", pady=2)
         self.rating_var = tk.StringVar(value="all")
         rating_frame = ttk.Frame(settings_frame)
@@ -133,11 +152,13 @@ class GelbooruDownloader:
                        value="explicit").pack(side="left", padx=(10, 0))
         
         # Пропускать дубликаты
+        # skip dupl
         self.skip_duplicates_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(settings_frame, text="Пропускать уже скачанные арты", 
                        variable=self.skip_duplicates_var).grid(row=3, column=1, sticky="w", pady=2)
         
         # Сортировка
+        # sort
         ttk.Label(settings_frame, text="Сортировка:").grid(row=4, column=0, sticky="w", pady=2)
         self.sort_var = tk.StringVar(value="date")
         sort_frame = ttk.Frame(settings_frame)
@@ -148,6 +169,7 @@ class GelbooruDownloader:
                        value="score").pack(side="left", padx=(10, 0))
         
         # Кнопки управления
+        # Control buttons
         buttons_frame = ttk.Frame(main_frame)
         buttons_frame.pack(fill="x", pady=(0, 10))
         
@@ -160,15 +182,18 @@ class GelbooruDownloader:
         self.stop_button.pack(side="left")
         
         # Прогресс бар
+        # progress bar
         self.progress = ttk.Progressbar(main_frame, orient="horizontal", mode="determinate")
         self.progress.pack(fill="x", pady=(0, 10))
         
         # Статус
+        # Status
         self.status_var = tk.StringVar(value="Готов к работе")
         status_label = ttk.Label(main_frame, textvariable=self.status_var)
         status_label.pack(anchor="w")
         
         # Лог
+        # log
         log_frame = ttk.LabelFrame(main_frame, text="Лог загрузки", padding="10")
         log_frame.pack(fill="both", expand=True)
         
@@ -296,6 +321,7 @@ class GelbooruDownloader:
         """Скачивает изображение по URL"""
         try:
             # Проверяем по ID поста
+            # id check of post
             if self.skip_duplicates_var.get() and post_id in self.downloaded_ids:
                 return False, "Пропущено (уже скачано по ID)"
             
@@ -303,6 +329,7 @@ class GelbooruDownloader:
             response.raise_for_status()
             
             # Проверяем дубликаты по хешу
+            # check dupl by hesh
             if self.skip_duplicates_var.get():
                 image_hash = self.calculate_image_hash(response.content)
                 if image_hash in self.downloaded_hashes:
@@ -312,6 +339,7 @@ class GelbooruDownloader:
                 self.downloaded_ids.add(post_id)
             
             # Сохраняем изображение
+            # download the pic
             filepath = os.path.join(self.download_path, filename)
             with open(filepath, 'wb') as f:
                 f.write(response.content)
@@ -327,6 +355,7 @@ class GelbooruDownloader:
         """Ищет посты на Gelbooru по тегам"""
         try:
             # Базовые параметры
+            # base params
             params = {
                 'page': 'dapi',
                 's': 'post',
@@ -338,11 +367,13 @@ class GelbooruDownloader:
             }
             
             # Добавляем API credentials в правильном формате
+            # adding api credential in correct format
             api_key = self.api_key_entry.get().strip()
             user_id = self.user_id_entry.get().strip()
             
             if api_key and user_id:
                 # Убираем возможные & в начале если есть
+                # remove the possible & at the beginning if there is
                 if api_key.startswith('&'):
                     api_key = api_key[1:]
                 if user_id.startswith('&'):
@@ -353,10 +384,12 @@ class GelbooruDownloader:
                 params['user_id'] = user_id
             
             # Добавляем рейтинг если выбран
+            # additg rating if selected
             if self.rating_var.get() != 'all':
                 params['tags'] = f"{tags} rating:{self.rating_var.get()}"
             
             # Добавляем сортировку
+            # adding sorting
             if self.sort_var.get() == 'score':
                 params['tags'] = f"{params['tags']} sort:score:desc"
             else:
@@ -397,21 +430,25 @@ class GelbooruDownloader:
     def get_safe_filename(self, post):
         """Создает безопасное имя файла из данных поста"""
         # Пробуем получить оригинальное имя файла
+        # trying to collect original file name
         if 'file_url' in post and post['file_url']:
             original_name = os.path.basename(post['file_url'])
             name, ext = os.path.splitext(original_name)
         else:
             # Используем ID поста если нет URL
+            # using ID of post if there is no url
             name = f"gelbooru_{post['id']}"
-            ext = ".jpg"  # дефолтное расширение
+            ext = ".jpg"  # дефолтное расширение / default resolution
         
         # Добавляем теги для удобства (первые 3 тега)
+        # adding tags for convenience
         tags = post.get('tags', '').split()
         tag_suffix = "_".join(tags[:3]) if tags else "unknown"
         
         safe_filename = f"{post['id']}_{tag_suffix}{ext}"
         
         # Заменяем небезопасные символы
+        # replacing not safe symbols
         safe_chars = " -_."
         return ''.join(c if c.isalnum() or c in safe_chars else '_' for c in safe_filename)
     
@@ -422,11 +459,13 @@ class GelbooruDownloader:
             self.stop_download = False
             
             # Получаем настройки
+            # collecting settings
             tags = self.tags_entry.get().strip()
             limit = int(self.limit_var.get())
             self.download_path = self.download_path_var.get()
             
             # Проверяем обязательные поля
+            # checking required boxes
             if not tags:
                 messagebox.showerror("Ошибка", "Введите теги для поиска")
                 return
@@ -436,6 +475,7 @@ class GelbooruDownloader:
                 return
             
             # Создаем папку если не существует
+            # creating folder if not existing
             os.makedirs(self.download_path, exist_ok=True)
             
             self.log(f"Начинаем загрузку с тегами: {tags}")
@@ -472,16 +512,19 @@ class GelbooruDownloader:
                             continue
                         
                         # Получаем URL изображения
+                        # collecting URL of pic
                         image_url = post.get('file_url')
                         if not image_url:
                             self.log(f"Пост {post_id}: нет URL изображения")
                             continue
                         
                         # Создаем имя файла
+                        # creating name of file
                         filename = self.get_safe_filename(post)
                         filepath = os.path.join(self.download_path, filename)
                         
                         # Пропускаем если файл уже существует
+                        # skiping file existing
                         if os.path.exists(filepath):
                             self.log(f"Пост {post_id}: пропущено (файл существует)")
                             skipped_count += 1
@@ -499,11 +542,13 @@ class GelbooruDownloader:
                             self.log(f"Пост {post_id}: {message}")
                         
                         # Обновляем прогресс
+                        # updating progress
                         self.progress['value'] = downloaded_count
                         self.status_var.set(f"Скачано: {downloaded_count} | Ошибок: {error_count} | Пропущено: {skipped_count}")
                         
                         # Соблюдаем лимит API (10 запросов в секунду)
-                        time.sleep(0.12)  # Немного больше для надежности
+                        # follow the limit of API (10 requests per second)
+                        time.sleep(0.12)  # Немного больше для надежности / a little more for safety
                         
                     except Exception as e:
                         error_count += 1
@@ -512,10 +557,12 @@ class GelbooruDownloader:
                 page += 1
                 
                 # Пауза между страницами
+                # pause between pages
                 if not self.stop_download and downloaded_count < limit:
                     time.sleep(1)
             
             # Сохраняем хеши и ID
+            # Saving hashes and IDs
             if self.skip_duplicates_var.get():
                 self.save_downloaded_hashes()
                 self.save_downloaded_ids()
@@ -538,6 +585,7 @@ class GelbooruDownloader:
             return
         
         # Запускаем в отдельном потоке
+        # Launch in different flow
         download_thread = threading.Thread(target=self.download_thread)
         download_thread.daemon = True
         download_thread.start()
